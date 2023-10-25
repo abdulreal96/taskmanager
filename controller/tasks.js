@@ -1,37 +1,26 @@
 const Task = require('../models/Task')
+const asyncWrapperMiddleware = require('../middleware/async')
+const {createCustomError} = require('../errors/custom-error')
 
-const getAllTasks = async (req, res) => {
-    try {
+const getAllTasks = asyncWrapperMiddleware(async (req, res) => {
         const tasks = await Task.find({})
         res.status(200).json({tasks})
-    }catch (e) {
-        res.status(500).json({msg: e})
-    }
-}
+})
 
-const createTask = async (req, res) => {
-    try {
+const createTask = asyncWrapperMiddleware(async (req, res) => {
         const task = await Task.create(req.body)
         res.status(201).json({task})
-    }catch (e) {
-        res.status(500).json({msg: e})
-    }
-}
+})
 
-const  getTask = async (req, res) => {
-    try {
+const  getTask = asyncWrapperMiddleware(async (req, res, next) => {
         const {id: taskID} = req.params
         const task = await Task.findOne({_id: taskID})
         if(!task)
-            return res.status(404).json({msg: `Task with id: ${taskID} not found`})
+           return next(createCustomError(`Task with id: ${taskID} not found`, 404))
         res.status(200).json({task})
-    }catch (e) {
-        res.status(500).json({msg: e})
-    }
-}
+})
 
-const updateTask = async (req, res) => {
-    try {
+const updateTask = asyncWrapperMiddleware(async (req, res, next) => {
         const {id: taskID} = req.params
         const task = await Task.findOneAndUpdate({_id: taskID}, req.body, {
             new: true,
@@ -39,25 +28,18 @@ const updateTask = async (req, res) => {
         })
 
         if(!task)
-            return res.status(404).json({msg: `Task with id: ${taskID} was not found`})
+            return next(createCustomError(`Task with id: ${taskID} not found`, 404))
         res.status(200).json({task})
-    }catch (e) {
-        res.status(500).json({msg: e})
-    }
-}
+})
 
-const deleteTask = async (req, res) => {
-    try {
+const deleteTask = asyncWrapperMiddleware(async (req, res, next) => {
         const {id: taskID} = req.params
         const task = await Task.findOneAndDelete({_id: taskID})
 
         if(!task)
-            return res.status(404).json({msg: `Task with id: ${taskID} was not found`})
+            return next(createCustomError(`Task with id: ${taskID} not found`, 404))
         res.status(200).json({task})
-    }catch (e) {
-        res.status(500).json({msg: e})
-    }
-}
+})
 
 module.exports = {
     getAllTasks,
